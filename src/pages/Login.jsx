@@ -15,13 +15,18 @@ function Login() {
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Clave para que Flask guarde la sesión
+        credentials: 'include',
         body: JSON.stringify({ usuario, contrasena })
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        // --- NUEVO: Guardamos el rol en el navegador ---
+        localStorage.setItem('usuario_nombre', data.usuario.nombre);
+        localStorage.setItem('usuario_rol', data.usuario.rol);
+        // -----------------------------------------------
+        
         navigate('/dashboard');
       } else {
         setError(data.error || 'Credenciales incorrectas');

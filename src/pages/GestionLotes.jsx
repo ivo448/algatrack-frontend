@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Navbar from '../components/navbar';
+import Navbar from '../components/Navbar';
 
 function GestionLotes() {
   const [lotes, setLotes] = useState([]);
