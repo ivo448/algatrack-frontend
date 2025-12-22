@@ -7,6 +7,7 @@ import GestionLotes from './pages/GestionLotes';
 import GestionPedidos from './pages/GestionPedidos';
 import GestionClientes from './pages/GestionClientes';
 import GestionUsuarios from './pages/GestionUsuarios';
+import Configuracion from './pages/Configuracion';
 
 // --- COMPONENTE DE SEGURIDAD ---
 // Si el usuario no tiene el rol correcto, lo echamos al Dashboard o al Login
@@ -64,6 +65,12 @@ function App() {
                 <GestionUsuarios />
             </RutaProtegida>
         } />
+        <Route path="/configuracion" element={
+            <RutaProtegida rolesPermitidos={['Gerencia']}>
+                <Configuracion />
+            </RutaProtegida>
+        } />
+        
 
       </Routes>
     </BrowserRouter>

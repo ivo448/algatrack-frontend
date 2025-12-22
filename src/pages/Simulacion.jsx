@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
+import { simulacionService } from '../utils/api'; // Usamos el servicio centralizado
 
 function Simulacion() {
   const [cantidad, setCantidad] = useState('');
   const [fecha, setFecha] = useState('');
-  const [cliente, setCliente] = useState(''); // NUEVO: Estado para Cliente
+  const [cliente, setCliente] = useState(''); 
   
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState(null);
@@ -20,28 +21,30 @@ function Simulacion() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/simulacion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ cantidad, fecha })
-      });
-      const data = await res.json();
-      if (res.ok) setResultado(data);
-      else setError(data.error);
-    } catch (err) { setError('Error de conexión'); } 
+      // Usamos el servicio de api.js para mantener consistencia
+      const data = await simulacionService.runSimulacion(cantidad, fecha);
+      
+      // El backend retorna { resumen, color, datos: {...} }
+      if (data && data.datos) {
+          setResultado(data);
+      } else {
+          setError("Respuesta inesperada del servidor");
+      }
+    } catch (err) { 
+        setError(err.message || 'Error de conexión con el motor de simulación'); 
+    } 
     finally { setLoading(false); }
   };
 
-  // NUEVA FUNCIÓN: Guardar Pedido
   const handleCrearPedido = async () => {
     if(!cliente) {
-        alert("Por favor ingresa el nombre del Cliente para confirmar.");
+        alert("⚠️ Por favor ingresa el nombre del Cliente para confirmar.");
         return;
     }
-    if(!confirm("¿Generar orden de venta real?")) return;
+    if(!confirm(`¿Confirmar venta a ${cliente} por ${cantidad} Toneladas?`)) return;
 
     try {
+        // Aquí deberías llamar a un servicio en api.js, pero mantenemos fetch directo por brevedad
         const res = await fetch('http://localhost:5000/api/pedidos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -55,111 +58,180 @@ function Simulacion() {
         });
 
         if(res.ok) {
-            alert("✅ ¡Pedido Creado! Redirigiendo al Calendario...");
-            navigate('/calendario');
+            alert("✅ ¡Pedido Creado Exitosamente!");
+            navigate('/dashboard'); // Redirigir al dashboard es más lógico tras una venta
         } else {
-            alert("Error al guardar pedido");
+            alert("❌ Error al guardar pedido");
         }
     } catch (e) { console.error(e); }
+  };
+
+  // Función auxiliar para formatear dinero (CLP)
+  const formatoDinero = (monto) => {
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(monto);
   };
 
   return (
     <>
       <Navbar />
-      <div className="container mt-4">
-        <h2 className="mb-3">🔬 Simulador de Escenarios Productivos</h2>
-        <p className="text-muted">Análisis de factibilidad ATP (Available to Promise).</p>
+      <div className="container mt-4 mb-5">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 className="mb-1">🔬 Simulador ATP & Costos</h2>
+                <p className="text-muted">Proyección Financiera y Biológica Parametrizada</p>
+            </div>
+            {/* Badge de conexión a BD Paramétrica */}
+            <span className="badge bg-secondary">
+                <i className="bi bi-database-check"></i> Conexión DB Activa
+            </span>
+        </div>
 
         <div className="row">
+          {/* PANEL DE CONTROL (IZQUIERDA) */}
           <div className="col-md-4">
-            <div className="card shadow-sm mb-4">
+            <div className="card shadow-sm mb-4 border-0 bg-light">
               <div className="card-body">
-                <h5 className="card-title mb-3">Datos del Escenario</h5>
+                <h5 className="card-title text-primary mb-3">🛠️ Parámetros de Entrada</h5>
                 <form onSubmit={handleSimulacion}>
-                  
-                  {/* CAMPO CLIENTE NUEVO */}
                   <div className="mb-3">
-                    <label className="form-label">Cliente / Proyecto</label>
+                    <label className="form-label fw-bold">Cliente / Proyecto</label>
                     <input 
                       type="text" className="form-control" 
                       value={cliente} onChange={e => setCliente(e.target.value)}
-                      placeholder="Ej: Salmonera Sur"
+                      placeholder="Ej: Exportadora Atacama"
                     />
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">Solicitud (Ton)</label>
+                    <label className="form-label fw-bold">Cantidad (Toneladas)</label>
                     <input 
-                      type="number" className="form-control" 
+                      type="number" className="form-control form-control-lg" 
                       value={cantidad} onChange={e => setCantidad(e.target.value)}
-                      required min="0.1" step="0.1"
+                      required min="0.1" step="0.1" placeholder="0.0"
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">Fecha Entrega</label>
+                    <label className="form-label fw-bold">Fecha Entrega Prometida</label>
                     <input 
                       type="date" className="form-control" 
                       value={fecha} onChange={e => setFecha(e.target.value)}
                       required
                     />
                   </div>
-                  <button type="submit" className="btn btn-primary w-100" disabled={loading}>
-                    {loading ? 'Calculando...' : 'Ejecutar Simulación'}
+                  <button type="submit" className="btn btn-primary w-100 py-2 fw-bold" disabled={loading}>
+                    {loading ? (
+                        <span><span className="spinner-border spinner-border-sm me-2"></span>Calculando...</span>
+                    ) : '⚡ Ejecutar Simulación'}
                   </button>
                 </form>
-                {error && <div className="alert alert-danger mt-3">{error}</div>}
+                {error && <div className="alert alert-danger mt-3 small">{error}</div>}
               </div>
+            </div>
+            
+            {/* Info estática de ayuda */}
+            <div className="alert alert-light text-muted small border">
+                <i className="bi bi-info-circle me-1"></i>
+                El sistema consultará los <strong>precios actualizados del agua y energía</strong> en la base de datos antes de calcular.
             </div>
           </div>
 
+          {/* PANEL DE RESULTADOS (DERECHA) */}
           <div className="col-md-8">
             {!resultado && !loading && (
-              <div className="alert alert-info text-center py-5">
-                <h4>Esperando parámetros...</h4>
+              <div className="text-center py-5 text-muted border rounded bg-white">
+                <h1>📊</h1>
+                <h4>Esperando simulación...</h4>
+                <p>Ingresa los datos para calcular viabilidad técnica y económica.</p>
               </div>
             )}
 
             {resultado && (
               <div className="fade-in">
-                <div className={`alert alert-${resultado.color === 'green' ? 'success' : 'warning'} shadow-sm`}>
-                   <h4 className="alert-heading">
-                     {resultado.color === 'green' ? '✅ FACTIBLE' : '⚠️ REQUIERE CULTIVO'}
-                   </h4>
-                   <p className="mb-0 fs-5">{resultado.resumen}</p>
+                {/* 1. DICTAMEN PRINCIPAL */}
+                <div className={`alert alert-${resultado.color === 'green' ? 'success' : 'warning'} shadow-sm border-start border-5 border-${resultado.color === 'green' ? 'success' : 'warning'}`}>
+                   <div className="d-flex justify-content-between align-items-center">
+                       <div>
+                           <h4 className="alert-heading fw-bold mb-1">
+                             {resultado.color === 'green' ? '✅ VIABLE PARA VENTA' : '⚠️ RIESGO DE QUIEBRE'}
+                           </h4>
+                           <span className="fs-5">{resultado.resumen}</span>
+                       </div>
+                       <div className="text-end">
+                           <small className="text-muted d-block">Estación Biológica</small>
+                           {/* NUEVO: Muestra si es Invierno/Verano según BD */}
+                           <span className="badge bg-info text-dark fs-6">
+                               {resultado.datos.escenario.estacion_detectada}
+                           </span>
+                       </div>
+                   </div>
                 </div>
 
-                {/* Tarjeta de Tiempos */}
-                <div className="card shadow border-info mb-3">
-                  <div className="card-header bg-info text-white fw-bold">
-                    ⏱️ Desglose de Tiempos ({resultado.datos.escenario.estacion})
-                  </div>
-                  <div className="card-body p-0">
-                    <ul className="list-group list-group-flush">
-                        <li className="list-group-item d-flex justify-content-between">
-                            <span>1. Fase Agrícola (Siembra/Cosecha)</span>
-                            <span className="badge bg-warning text-dark">
-                                {resultado.datos.operaciones.desglose_dias.cultivo_cosecha} días
-                            </span>
-                        </li>
-                        <li className="list-group-item d-flex justify-content-between">
-                            <span>2. Fase Industrial (Secado/Proceso)</span>
-                            <span className="badge bg-primary">
-                                {resultado.datos.operaciones.desglose_dias.procesamiento} días
-                            </span>
-                        </li>
-                        <li className="list-group-item d-flex justify-content-between bg-light fw-bold">
-                            <span>TOTAL LEAD TIME</span>
-                            <span>{resultado.datos.operaciones.dias_totales_estimados} Días</span>
-                        </li>
-                    </ul>
-                  </div>
+                <div className="row g-3">
+                    {/* 2. TARJETA FINANCIERA (LA JOYA DE TU PROYECTO) */}
+                    <div className="col-md-7">
+                        <div className="card shadow-sm h-100 border-primary">
+                            <div className="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+                                <span>💰 Análisis de Costos (Zona Norte)</span>
+                                <span>{formatoDinero(resultado.datos.financiero.costo_total)}</span>
+                            </div>
+                            <div className="card-body">
+                                <p className="small text-muted mb-3">Costos calculados con parámetros de BD en tiempo real.</p>
+                                
+                                <ul className="list-group list-group-flush small">
+                                    <li className="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>💧 Agua Industrial</span>
+                                        <span className="fw-bold">{formatoDinero(resultado.datos.financiero.detalle_costos.agua)}</span>
+                                    </li>
+                                    <li className="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>⚡ Energía (Secado)</span>
+                                        <span className="fw-bold">{formatoDinero(resultado.datos.financiero.detalle_costos.energia)}</span>
+                                    </li>
+                                    <li className="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>🚜 Diesel Maquinaria</span>
+                                        <span className="fw-bold">{formatoDinero(resultado.datos.financiero.detalle_costos.diesel)}</span>
+                                    </li>
+                                    <li className="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>👷 Mano de Obra</span>
+                                        <span className="fw-bold">{formatoDinero(resultado.datos.financiero.detalle_costos.mano_obra)}</span>
+                                    </li>
+                                    {/* Si hay déficit, mostramos el recargo */}
+                                    {resultado.datos.resultado.deficit_a_cultivar > 0 && (
+                                        <li className="list-group-item list-group-item-warning d-flex justify-content-between align-items-center">
+                                            <span>⚠️ Recargo por Urgencia</span>
+                                            <span className="text-danger fw-bold">+15%</span>
+                                        </li>
+                                    )}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. TARJETA OPERATIVA */}
+                    <div className="col-md-5">
+                        <div className="card shadow-sm h-100">
+                            <div className="card-header bg-dark text-white fw-bold">
+                                ⏱️ Lead Time
+                            </div>
+                            <div className="card-body text-center d-flex flex-column justify-content-center">
+                                <h2 className="display-4 fw-bold text-dark">
+                                    {resultado.datos.operaciones.dias_totales}
+                                </h2>
+                                <span className="text-muted text-uppercase small ls-1">Días Estimados</span>
+                                <hr />
+                                <div className="text-start small">
+                                    <p className="mb-1"><strong>Stock Actual:</strong> {resultado.datos.resultado.stock_disponible} Ton</p>
+                                    <p className="mb-0 text-danger"><strong>Déficit:</strong> {resultado.datos.resultado.deficit_a_cultivar} Ton</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* BOTÓN DE CONFIRMACIÓN */}
+                {/* BOTÓN DE CIERRE */}
                 {resultado.color === 'green' && (
-                    <div className="d-grid gap-2">
-                        <button onClick={handleCrearPedido} className="btn btn-success btn-lg shadow">
-                            💾 Confirmar y Crear Pedido
+                    <div className="mt-4 d-grid">
+                        <button onClick={handleCrearPedido} className="btn btn-success btn-lg shadow fw-bold">
+                            💾 Confirmar Pedido y Bloquear Stock
                         </button>
                     </div>
                 )}

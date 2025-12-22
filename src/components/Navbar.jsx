@@ -54,6 +54,9 @@ function Navbar() {
                 {rol === 'Gerencia' && (
                     <Link className="nav-link text-warning" to="/admin-usuarios">Usuarios</Link>
                 )}
+                {rol === 'Gerencia' && (
+                    <Link className="nav-link text-warning" to="/configuracion">Configuración</Link>
+                )}
             </div>
 
             <div className="d-flex align-items-center gap-3">

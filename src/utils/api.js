@@ -79,3 +79,11 @@ export const simulacionService = {
     // Envía la cantidad y fecha para el cálculo ATP
     runSimulacion: (cantidad, fecha) => apiFetch('/api/simulacion', 'POST', { cantidad, fecha }),
 };
+
+export const configService = {
+    getEconomicos: () => apiFetch('/api/config/sistema', 'GET'),
+    updateEconomicos: (listaParams) => apiFetch('/api/config/sistema', 'PUT', listaParams),
+    
+    getEstaciones: () => apiFetch('/api/config/estaciones', 'GET'),
+    updateEstacion: (estacionData) => apiFetch('/api/config/estaciones', 'PUT', estacionData)
+};
