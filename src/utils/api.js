@@ -1,74 +1,69 @@
 /**
  * Configuración de la API para Algatrack
- * * NOTA: 
- * En desarrollo (localhost), VITE_API_BASE_URL es 'http://localhost:5000'
- * En Vercel (Producción), se inyectará la URL de Render.
+ * 1. Intenta leer VITE_API_BASE_URL (Configurado en Vercel/Render).
+ * 2. Si no existe, asume que estamos en local y usa 'http://localhost:5000'.
  */
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 /**
  * Función genérica para manejar peticiones Fetch
  * @param {string} endpoint - La ruta de la API (ej: '/api/login')
- * @param {string} method - Método HTTP (GET, POST, etc.)
- * @param {object} data - Datos para enviar en el cuerpo (solo para POST/PUT)
+ * @param {string} method - Método HTTP (GET, POST, PUT, DELETE)
+ * @param {object} data - Datos para enviar en el cuerpo (JSON)
  * @returns {Promise<object>} - La respuesta de la API
  */
 async function apiFetch(endpoint, method = 'GET', data = null) {
-    const url = `${VITE_API_BASE_URL}${endpoint}`;
+    const url = `${BASE_URL}${endpoint}`;
     
-    // Configuración de la cabecera
     const headers = {
         'Content-Type': 'application/json',
     };
 
-    // Configuración de la petición
     const config = {
         method: method,
         headers: headers,
-        // IMPORTANTE: Envía y acepta cookies de sesión para la autenticación
-        credentials: 'include', 
+        credentials: 'include', // Vital para mantener la sesión (cookies)
     };
 
     if (data) {
         config.body = JSON.stringify(data);
+    }else{
+        // Para métodos como DELETE que no deben tener body
+        if(method === 'DELETE' || method === 'GET'){
+            delete config.body;
+        }
     }
 
     try {
         const response = await fetch(url, config);
 
-        // Si la respuesta no es OK (ej: 401 Unauthorized, 500 Internal Error)
+        // Manejo de Errores HTTP (400, 401, 403, 500)
         if (!response.ok) {
-            // Intentar leer el JSON de error del backend (si existe)
             const errorData = await response.json().catch(() => ({ 
                 error: response.statusText, 
-                message: `Error ${response.status} en la API.` 
+                message: `Error ${response.status}: No se pudo conectar con el servidor.` 
             }));
-
-            // Lanza un error con la información útil
             throw new Error(errorData.message || errorData.error);
         }
 
-        // Si la respuesta es 204 No Content (ej: Logout exitoso), devuelve un objeto vacío
-        if (response.status === 204) {
-            return {};
-        }
+        // 204 No Content (Ej: Logout exitoso)
+        if (response.status === 204) return {};
 
-        // Retorna el cuerpo de la respuesta como JSON
         return await response.json();
     } catch (error) {
-        console.error('API Fetch Error:', error);
-        // Propaga el error para que el componente React lo maneje
+        console.error(`Error en API (${endpoint}):`, error);
         throw error; 
     }
 }
 
 // =========================================================
-// Funciones de Acceso Público (Endpoints específicos)
+// SERVICIOS DE ACCESO PÚBLICO Y PRIVADO
 // =========================================================
 
 export const authService = {
     login: (usuario, contrasena) => apiFetch('/api/login', 'POST', { usuario, contrasena }),
     logout: () => apiFetch('/api/logout', 'POST'),
+    // checkSession: () => apiFetch('/api/me', 'GET'), // Útil si implementas persistencia de sesión al recargar
 };
 
 export const dashboardService = {
@@ -76,14 +71,41 @@ export const dashboardService = {
 };
 
 export const simulacionService = {
-    // Envía la cantidad y fecha para el cálculo ATP
     runSimulacion: (cantidad, fecha) => apiFetch('/api/simulacion', 'POST', { cantidad, fecha }),
 };
 
 export const configService = {
     getEconomicos: () => apiFetch('/api/config/sistema', 'GET'),
     updateEconomicos: (listaParams) => apiFetch('/api/config/sistema', 'PUT', listaParams),
-    
     getEstaciones: () => apiFetch('/api/config/estaciones', 'GET'),
     updateEstacion: (estacionData) => apiFetch('/api/config/estaciones', 'PUT', estacionData)
+};
+
+export const calendarioService = {
+    getEventos: () => apiFetch('/api/calendario', 'GET'),
+};
+
+export const lotesService = {
+    getLotes: () => apiFetch('/api/lotes', 'GET'),
+    crearLote: (lote) => apiFetch('/api/lotes', 'POST', lote),
+    actualizarLote: (id, lote) => apiFetch(`/api/lotes/${id}`, 'PUT', lote),
+    eliminarLote: (id) => apiFetch(`/api/lotes/${id}`, 'DELETE'),
+};
+
+export const pedidosService = {
+    getPedidos: () => apiFetch('/api/pedidos', 'GET'),
+    crearPedido: (pedido) => apiFetch('/api/pedidos', 'POST', pedido),
+    actualizarEstado: (id, estado) => apiFetch(`/api/pedidos/${id}`, 'PATCH', { estado }),
+};
+
+export const clientesService = {
+    getClientes: () => apiFetch('/api/clientes', 'GET'),
+    crearCliente: (cliente) => apiFetch('/api/clientes', 'POST', cliente),
+};
+
+export const usuariosService = {
+    getUsuarios: () => apiFetch('/api/usuarios', 'GET'),
+    crearUsuario: (usuario) => apiFetch('/api/usuarios', 'POST', usuario),
+    actualizarUsuario: (id, usuario) => apiFetch(`/api/usuarios/${id}`, 'PUT', usuario),
+    eliminarUsuario: (id) => apiFetch(`/api/usuarios/${id}`, 'DELETE'),
 };

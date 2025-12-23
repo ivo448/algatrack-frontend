@@ -44,7 +44,7 @@ function GestionClientes() {
     <>
       <Navbar />
       <div className="container mt-4">
-        <h2>🤝 Directorio de Clientes</h2>
+        <h2>👥 Directorio de Clientes</h2>
         
         <div className="row mt-4">
           {/* Formulario */}

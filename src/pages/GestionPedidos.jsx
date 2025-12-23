@@ -76,7 +76,7 @@ function GestionPedidos() {
     <>
       <Navbar />
       <div className="container mt-4">
-        <h2>📦 Gestión Comercial de Pedidos</h2>
+        <h2>📦 Gestión de Pedidos</h2>
         
         <div className="row mt-4">
           {/* Formulario de Ingreso */}

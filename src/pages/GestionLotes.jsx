@@ -66,8 +66,8 @@ function GestionLotes() {
                         value={nuevoLote.tipo_alga}
                         onChange={e => setNuevoLote({...nuevoLote, tipo_alga: e.target.value})}
                     >
-                        <option value="Gracilaria">Gracilaria (Rápida)</option>
-                        <option value="Pelillo">Pelillo (Lenta)</option>
+                        <option value="Gracilaria">Gracilaria</option>
+                        <option value="Pelillo">Pelillo</option>
                     </select>
                   </div>
                   <div className="mb-3">

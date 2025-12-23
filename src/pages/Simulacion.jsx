@@ -78,12 +78,7 @@ function Simulacion() {
         <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
                 <h2 className="mb-1">🔬 Simulador ATP & Costos</h2>
-                <p className="text-muted">Proyección Financiera y Biológica Parametrizada</p>
             </div>
-            {/* Badge de conexión a BD Paramétrica */}
-            <span className="badge bg-secondary">
-                <i className="bi bi-database-check"></i> Conexión DB Activa
-            </span>
         </div>
 
         <div className="row">

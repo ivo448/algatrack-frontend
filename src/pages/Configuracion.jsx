@@ -91,7 +91,7 @@ function Configuracion() {
                 className={`nav-link ${activeTab === 'biologica' ? 'active fw-bold' : ''}`}
                 onClick={() => setActiveTab('biologica')}
             >
-                🧬 Biología y Clima
+                🧬 Factores
             </button>
           </li>
         </ul>
@@ -110,7 +110,6 @@ function Configuracion() {
                     <table className="table table-hover mb-0 align-middle">
                         <thead className="table-light">
                             <tr>
-                                <th>Parámetro</th>
                                 <th>Valor Actual</th>
                                 <th>Unidad</th>
                                 <th>Descripción</th>
@@ -119,7 +118,6 @@ function Configuracion() {
                         <tbody>
                             {paramsEconomicos.map((param) => (
                                 <tr key={param.clave}>
-                                    <td className="fw-bold text-primary">{param.clave}</td>
                                     <td>
                                         <input 
                                             type="number" 

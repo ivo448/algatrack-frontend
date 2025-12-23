@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 function Dashboard() {
@@ -28,7 +29,7 @@ function Dashboard() {
               <div className="card-body text-center">
                 <h5 className="card-title">Lotes Activos (En Cultivo)</h5>
                 <p className="display-3 fw-bold">{data.kpis.lotes_activos}</p>
-                <small>Datos en tiempo real (PostgreSQL)</small>
+                <Link to="/gestion-lotes" className="btn btn-light">Ver Lotes</Link>
               </div>
             </div>
           </div>
@@ -39,7 +40,7 @@ function Dashboard() {
               <div className="card-body text-center">
                 <h5 className="card-title">Pedidos Pendientes</h5>
                 <p className="display-3 fw-bold">{data.kpis.pedidos_pendientes}</p>
-                <small>Requieren atención comercial</small>
+                <Link to="/gestion-pedidos" className="btn btn-light">Ver Pedidos</Link>
               </div>
             </div>
           </div>

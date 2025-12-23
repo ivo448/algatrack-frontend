@@ -52,10 +52,10 @@ function Navbar() {
 
                 {/* 4. ADMIN (Solo Gerencia) */}
                 {rol === 'Gerencia' && (
-                    <Link className="nav-link text-warning" to="/admin-usuarios">Usuarios</Link>
+                    <Link className="nav-link" to="/admin-usuarios">Usuarios</Link>
                 )}
                 {rol === 'Gerencia' && (
-                    <Link className="nav-link text-warning" to="/configuracion">Configuración</Link>
+                    <Link className="nav-link" to="/configuracion">Configuración</Link>
                 )}
             </div>
 
