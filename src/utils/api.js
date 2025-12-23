@@ -3,7 +3,7 @@
  * 1. Intenta leer VITE_API_BASE_URL (Configurado en Vercel/Render).
  * 2. Si no existe, asume que estamos en local y usa 'http://localhost:5000'.
  */
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
  * Función genérica para manejar peticiones Fetch
