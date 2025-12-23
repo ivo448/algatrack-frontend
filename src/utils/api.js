@@ -4,7 +4,7 @@
  * En desarrollo (localhost), VITE_API_BASE_URL es 'http://localhost:5000'
  * En Vercel (Producción), se inyectará la URL de Render.
  */
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
  * Función genérica para manejar peticiones Fetch
@@ -14,7 +14,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
  * @returns {Promise<object>} - La respuesta de la API
  */
 async function apiFetch(endpoint, method = 'GET', data = null) {
-    const url = `${BASE_URL}${endpoint}`;
+    const url = `${VITE_API_BASE_URL}${endpoint}`;
     
     // Configuración de la cabecera
     const headers = {
