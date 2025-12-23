@@ -39,6 +39,13 @@ async function apiFetch(endpoint, method = 'GET', data = null) {
 
             // Manejo de Errores HTTP (400, 401, 403, 500)
         if (!response.ok) {
+            // Manejo especial para sesión expirada / no autorizada
+            if (response.status === 401) {
+                console.warn('API: 401 Unauthorized — limpiando sesión y redirigiendo al login.');
+                try { localStorage.clear(); } catch (e) { /* ignore */ }
+                if (typeof window !== 'undefined') window.location.href = '/';
+            }
+
             const errorData = await response.json().catch(() => ({ 
                 error: response.statusText, 
                 message: `Error ${response.status}: No se pudo conectar con el servidor.` 
