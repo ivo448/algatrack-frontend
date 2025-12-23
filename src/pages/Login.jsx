@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../utils/api'; // <--- IMPORTANTE: Usamos el servicio centralizado
 
 function Login() {
   const [usuario, setUsuario] = useState('');
@@ -12,27 +13,24 @@ function Login() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ usuario, contrasena })
-      });
+      // CORRECCIÓN: Usamos authService.login en lugar de fetch directo a localhost
+      // Esto tomará automáticamente la URL correcta (Render o Localhost) según el entorno
+      const data = await authService.login(usuario, contrasena);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // --- NUEVO: Guardamos el rol en el navegador ---
+      // Si authService no lanza error, el login fue exitoso
+      if (data && data.usuario) {
         localStorage.setItem('usuario_nombre', data.usuario.nombre);
         localStorage.setItem('usuario_rol', data.usuario.rol);
-        // -----------------------------------------------
-        
         navigate('/dashboard');
       } else {
-        setError(data.error || 'Credenciales incorrectas');
+         // Fallback por si la respuesta viene vacía
+        setError('Error inesperado al iniciar sesión');
       }
+
     } catch (err) {
-      setError('No se pudo conectar con el servidor');
+      // Aquí capturamos el error lanzado por api.js (ej: "Credenciales incorrectas")
+      console.error("Login error:", err);
+      setError(err.message || 'No se pudo conectar con el servidor');
     }
   };
 
