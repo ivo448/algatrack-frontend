@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../utils/api';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -9,17 +10,14 @@ function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/api/logout', { 
-        method: 'POST',
-        credentials: 'include'
-      });
+      await authService.logout();
       // Limpiamos los datos del navegador
       localStorage.clear();
       navigate('/');
     } catch (error) {
       console.error("Error al salir", error);
     }
-  };
+  }; 
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-success mb-4 shadow-sm">

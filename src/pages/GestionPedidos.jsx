@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import { pedidosService, clientesService } from '../utils/api';
 
 function GestionPedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -13,58 +14,60 @@ function GestionPedidos() {
   // Cargar pedidos al inicio
   const cargarPedidos = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/pedidos', { credentials: 'include' });
-      if (res.ok) setPedidos(await res.json());
+      const data = await pedidosService.getPedidos();
+      setPedidos(data);
     } catch (error) {
       console.error("Error cargando pedidos:", error);
     }
-  };
+  }; 
 
   useEffect(() => { cargarPedidos(); }, []);
 
   // Crear Pedido
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:5000/api/pedidos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(nuevo)
-    });
-    if (res.ok) {
+    try {
+      await pedidosService.crearPedido(nuevo);
       alert("✅ Pedido creado");
       setNuevo({ cliente: '', producto: 'Pellet Premium', cantidad_ton: '', fecha_entrega: '' });
       cargarPedidos();
+    } catch (err) {
+      console.error('Error creando pedido', err);
+      alert(err.data?.error || err.message || 'Error al crear pedido');
     }
-  };
+  }; 
 
   // Cambiar Estado (Entregar/Cancelar)
   const actualizarEstado = async (id, estado) => {
     if(!confirm(`¿Marcar este pedido como ${estado.toUpperCase()}?`)) return;
-    
-    await fetch(`http://localhost:5000/api/pedidos/${id}/estado`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ estado })
-    });
-    cargarPedidos();
-  };
+    try {
+      await pedidosService.actualizarEstadoPedido(id, estado);
+      cargarPedidos();
+    } catch (err) {
+      console.error('Error actualizando estado', err);
+      alert(err.data?.error || err.message);
+    }
+  }; 
 
   // Eliminar
   const eliminar = async (id) => {
     if(!confirm("¿Eliminar este pedido permanentemente?")) return;
-    await fetch(`http://localhost:5000/api/pedidos/${id}`, { method: 'DELETE', credentials: 'include' });
-    cargarPedidos();
-  };
+    try {
+      await pedidosService.eliminarPedido(id);
+      cargarPedidos();
+    } catch (err) {
+      console.error('Error eliminando pedido', err);
+      alert(err.data?.error || err.message);
+    }
+  }; 
 
   const [listaClientes, setListaClientes] = useState([]);
 
   // Cargar lista de clientes para el select
   const cargarClientes = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/clientes', { credentials: 'include' });
-        if (res.ok) setListaClientes(await res.json());
+      const data = await clientesService.getClientes();
+      setListaClientes(data);
     } catch (error) {
       console.error("Error cargando clientes:", error);
     }

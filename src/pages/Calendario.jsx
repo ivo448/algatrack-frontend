@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import FullCalendar from '@fullcalendar/react';
+import { calendarioService } from '../utils/api';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import esLocale from '@fullcalendar/core/locales/es'; // Para que salga en español
 
@@ -8,15 +9,14 @@ function Calendario() {
   const [eventos, setEventos] = useState([]);
 
   useEffect(() => {
-    // Cargar los eventos desde tu API Flask
-    fetch('http://localhost:5000/api/calendario', { credentials: 'include' })
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setEventos(data);
-        }
-      })
-      .catch(err => console.error("Error cargando calendario", err));
+    (async () => {
+      try {
+        const data = await calendarioService.getEventos();
+        if (Array.isArray(data)) setEventos(data);
+      } catch (err) {
+        console.error("Error cargando calendario", err);
+      }
+    })();
   }, []);
 
   return (

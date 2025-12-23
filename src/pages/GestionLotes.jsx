@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import { lotesService } from '../utils/api';
 
 function GestionLotes() {
   const [lotes, setLotes] = useState([]);
@@ -11,40 +12,51 @@ function GestionLotes() {
 
   // 1. Cargar Lotes
   const cargarLotes = async () => {
-    const res = await fetch('http://localhost:5000/api/lotes', { credentials: 'include' });
-    const data = await res.json();
-    setLotes(data);
-  };
+    try {
+      const data = await lotesService.getLotes();
+      setLotes(data);
+    } catch (err) {
+      console.error('Error cargando lotes', err);
+    }
+  }; 
 
   useEffect(() => { cargarLotes(); }, []);
 
   // 2. Crear Lote
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:5000/api/lotes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(nuevoLote)
-    });
-    if (res.ok) {
-        alert("✅ Lote creado. Fecha de cosecha calculada automáticamente.");
-        setNuevoLote({ tipo_alga: 'Gracilaria', superficie: '', fecha_inicio: '' });
-        cargarLotes(); // Recargar tabla
+    try {
+      await lotesService.crearLote(nuevoLote);
+      alert("✅ Lote creado. Fecha de cosecha calculada automáticamente.");
+      setNuevoLote({ tipo_alga: 'Gracilaria', superficie: '', fecha_inicio: '' });
+      cargarLotes(); // Recargar tabla
+    } catch (err) {
+      console.error('Error creando lote', err);
+      alert(err.data?.error || err.message || 'Error al crear lote');
     }
-  };
+  }; 
 
   // 3. Acciones (Eliminar / Cosechar)
   const eliminarLote = async (id) => {
     if(!confirm("¿Borrar este lote?")) return;
-    await fetch(`http://localhost:5000/api/lotes/${id}`, { method: 'DELETE', credentials: 'include' });
-    cargarLotes();
+    try {
+      await lotesService.eliminarLote(id);
+      cargarLotes();
+    } catch (err) {
+      console.error('Error eliminando lote', err);
+      alert(err.data?.error || err.message);
+    }
   };
 
   const cosecharLote = async (id) => {
-    await fetch(`http://localhost:5000/api/lotes/${id}/cosechar`, { method: 'PUT', credentials: 'include' });
-    cargarLotes();
-  };
+    try {
+      await lotesService.cosecharLote(id);
+      cargarLotes();
+    } catch (err) {
+      console.error('Error en cosecha', err);
+      alert(err.data?.error || err.message);
+    }
+  }; 
 
   return (
     <>

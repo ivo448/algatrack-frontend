@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
-import { simulacionService } from '../utils/api'; // Usamos el servicio centralizado
+import { simulacionService, pedidosService } from '../utils/api'; // Usamos el servicio centralizado
 
 function Simulacion() {
   const [cantidad, setCantidad] = useState('');
@@ -44,26 +44,18 @@ function Simulacion() {
     if(!confirm(`¿Confirmar venta a ${cliente} por ${cantidad} Toneladas?`)) return;
 
     try {
-        // Aquí deberías llamar a un servicio en api.js, pero mantenemos fetch directo por brevedad
-        const res = await fetch('http://localhost:5000/api/pedidos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                cliente: cliente,
-                producto: 'Pellet Estándar',
-                cantidad: cantidad,
-                fecha_entrega: fecha
-            })
+        await pedidosService.crearPedido({
+            cliente: cliente,
+            producto: 'Pellet Estándar',
+            cantidad: cantidad,
+            fecha_entrega: fecha
         });
-
-        if(res.ok) {
-            alert("✅ ¡Pedido Creado Exitosamente!");
-            navigate('/dashboard'); // Redirigir al dashboard es más lógico tras una venta
-        } else {
-            alert("❌ Error al guardar pedido");
-        }
-    } catch (e) { console.error(e); }
+        alert("✅ ¡Pedido Creado Exitosamente!");
+        navigate('/dashboard'); // Redirigir al dashboard es más lógico tras una venta
+    } catch (err) {
+        console.error('Error creando pedido', err);
+        alert(err.data?.error || err.message || '❌ Error al guardar pedido');
+    }
   };
 
   // Función auxiliar para formatear dinero (CLP)

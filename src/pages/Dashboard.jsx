@@ -1,25 +1,31 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Agregamos useNavigate
 import Navbar from '../components/Navbar';
+import { dashboardService } from '../utils/api'; // <--- IMPORTANTE: Usamos el servicio centralizado
 
 function Dashboard() {
   const [data, setData] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/dashboard', { credentials: 'include' })
-      .then(res => {
-        if (res.status === 401) window.location.href = '/';
-        return res.json();
-      })
-      .then(setData);
-  }, []);
+    // Reemplazamos el fetch directo por el servicio
+    dashboardService.getDashboard()
+      .then(setData)
+      .catch(err => {
+        console.error("Error cargando dashboard:", err);
+        // Si el error es de autenticación (401), redirigir al login
+        if (err.status === 401) {
+            navigate('/');
+        }
+      });
+  }, [navigate]);
 
   if (!data) return <div className="text-center mt-5">Cargando datos de producción...</div>;
 
   return (
     <>
       <Navbar />
-      <div className="container">
+      <div className="container mt-4 mb-5">
         <h2 className="mb-4">Panel de Control Gerencial</h2>
         
         <div className="row">

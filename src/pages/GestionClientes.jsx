@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import { clientesService } from '../utils/api';
 
 function GestionClientes() {
   const [clientes, setClientes] = useState([]);
@@ -8,37 +9,39 @@ function GestionClientes() {
   });
 
   const cargarClientes = async () => {
-    const res = await fetch('http://localhost:5000/api/clientes', { credentials: 'include' });
-    if (res.ok) setClientes(await res.json());
+    try {
+      const data = await clientesService.getClientes();
+      setClientes(data);
+    } catch (err) {
+      console.error('Error cargando clientes', err);
+    }
   };
 
   useEffect(() => { cargarClientes(); }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:5000/api/clientes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(nuevo)
-    });
-    const data = await res.json();
-    if (res.ok) {
+    try {
+      await clientesService.crearCliente(nuevo);
       alert("✅ Cliente registrado");
       setNuevo({ empresa: '', contacto: '', email: '', telefono: '', direccion: '' });
       cargarClientes();
-    } else {
-      alert("Error: " + data.error);
+    } catch (err) {
+      console.error('Error creando cliente', err);
+      alert(err.data?.error || err.message || 'Error al crear cliente');
     }
-  };
+  }; 
 
   const eliminar = async (id) => {
     if(!confirm("¿Eliminar este cliente de la base de datos?")) return;
-    const res = await fetch(`http://localhost:5000/api/clientes/${id}`, { method: 'DELETE', credentials: 'include' });
-    const data = await res.json();
-    if (res.ok) cargarClientes();
-    else alert(data.error);
-  };
+    try {
+      await clientesService.eliminarCliente(id);
+      cargarClientes();
+    } catch (err) {
+      console.error('Error eliminando cliente', err);
+      alert(err.data?.error || err.message);
+    }
+  }; 
 
   return (
     <>

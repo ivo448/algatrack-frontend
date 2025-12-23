@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import { usuariosService } from '../utils/api';
 
 function GestionUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -10,14 +11,18 @@ function GestionUsuarios() {
 
   // 1. Cargar Usuarios
   const cargarUsuarios = async () => {
-    const res = await fetch('http://localhost:5000/api/usuarios', { credentials: 'include' });
-    if (res.ok) {
-        setUsuarios(await res.json());
+    try {
+        const data = await usuariosService.getUsuarios();
+        setUsuarios(data);
         setError('');
-    } else {
-        const data = await res.json();
-        // Si no es gerente, probablemente reciba un 403
-        if(res.status === 403) setError("⛔ Acceso denegado: Solo Gerencia puede ver esto.");
+    } catch (err) {
+        // Si el error es 403 (Prohibido), mostramos mensaje amigable
+        if (err.status === 403) {
+            setError("⛔ Acceso denegado: Solo Gerencia puede ver esto.");
+        } else {
+            console.error("Error cargando usuarios:", err);
+            setError("Error al cargar lista de usuarios");
+        }
     }
   };
 
@@ -26,33 +31,25 @@ function GestionUsuarios() {
   // 2. Crear Usuario
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:5000/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(nuevo)
-    });
-    
-    const data = await res.json();
-    if (res.ok) {
-      alert("✅ Usuario creado exitosamente");
-      setNuevo({ usuario: '', email: '', contrasena: '', rol: 'Personal' });
-      cargarUsuarios();
-    } else {
-      alert("Error: " + data.error);
+    try {
+        await usuariosService.crearUsuario(nuevo);
+        alert("✅ Usuario creado exitosamente");
+        setNuevo({ usuario: '', email: '', contrasena: '', rol: 'Personal' });
+        cargarUsuarios(); // Recargar lista
+    } catch (err) {
+        alert("Error al crear usuario: " + err.message);
     }
   };
 
   // 3. Eliminar
   const eliminar = async (id) => {
     if(!confirm("¿Estás seguro de eliminar este usuario?")) return;
-    const res = await fetch(`http://localhost:5000/api/usuarios/${id}`, { method: 'DELETE', credentials: 'include' });
     
-    if (res.ok) {
-        cargarUsuarios();
-    } else {
-        const data = await res.json();
-        alert(data.error);
+    try {
+        await usuariosService.eliminarUsuario(id);
+        cargarUsuarios(); // Recargar lista
+    } catch (err) {
+        alert("Error al eliminar: " + err.message);
     }
   };
 

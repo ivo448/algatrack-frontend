@@ -37,13 +37,17 @@ async function apiFetch(endpoint, method = 'GET', data = null) {
     try {
         const response = await fetch(url, config);
 
-        // Manejo de Errores HTTP (400, 401, 403, 500)
+            // Manejo de Errores HTTP (400, 401, 403, 500)
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ 
                 error: response.statusText, 
                 message: `Error ${response.status}: No se pudo conectar con el servidor.` 
             }));
-            throw new Error(errorData.message || errorData.error);
+            const err = new Error(errorData.message || errorData.error);
+            // Adjuntamos metadata útil (status y cuerpo) para que los consumidores puedan tomar decisiones
+            err.status = response.status;
+            err.data = errorData;
+            throw err;
         }
 
         // 204 No Content (Ej: Logout exitoso)
@@ -90,17 +94,22 @@ export const lotesService = {
     crearLote: (lote) => apiFetch('/api/lotes', 'POST', lote),
     actualizarLote: (id, lote) => apiFetch(`/api/lotes/${id}`, 'PUT', lote),
     eliminarLote: (id) => apiFetch(`/api/lotes/${id}`, 'DELETE'),
+    cosecharLote: (id) => apiFetch(`/api/lotes/${id}/cosechar`, 'PUT'),
 };
 
 export const pedidosService = {
     getPedidos: () => apiFetch('/api/pedidos', 'GET'),
     crearPedido: (pedido) => apiFetch('/api/pedidos', 'POST', pedido),
     actualizarEstado: (id, estado) => apiFetch(`/api/pedidos/${id}`, 'PATCH', { estado }),
+    // Endpoint tradicional en este proyecto para cambiar solo estado
+    actualizarEstadoPedido: (id, estado) => apiFetch(`/api/pedidos/${id}/estado`, 'PUT', { estado }),
+    eliminarPedido: (id) => apiFetch(`/api/pedidos/${id}`, 'DELETE'),
 };
 
 export const clientesService = {
     getClientes: () => apiFetch('/api/clientes', 'GET'),
     crearCliente: (cliente) => apiFetch('/api/clientes', 'POST', cliente),
+    eliminarCliente: (id) => apiFetch(`/api/clientes/${id}`, 'DELETE'),
 };
 
 export const usuariosService = {
